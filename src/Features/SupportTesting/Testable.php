@@ -116,9 +116,7 @@ class Testable
     function set($name, $value = null)
     {
         if (is_array($name)) {
-            foreach ($name as $key => $value) {
-                $this->setProperty($key, $value);
-            }
+            $this->setMultipleProperties($name);
         } else {
             $this->setProperty($name, $value);
         }
@@ -137,6 +135,21 @@ class Testable
         }
 
         return $this->update(updates: [$name => $value]);
+    }
+
+    function setMultipleProperties($props)
+    {
+        foreach ($props as $name => $value) {
+            if ($value instanceof \Illuminate\Http\UploadedFile) {
+                return $this->upload($name, [$value]);
+            } elseif (is_array($value) && isset($value[0]) && $value[0] instanceof \Illuminate\Http\UploadedFile) {
+                return $this->upload($name, $value, $isMultiple = true);
+            } elseif ($value instanceof BackedEnum) {
+                $value = $value->value;
+            }
+        }
+
+        return $this->update(updates: $props);
     }
 
     function runAction($method, ...$params)
